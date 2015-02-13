@@ -20,7 +20,7 @@ class ControllerUserPostRestriction{
     public function noticeMissingOdinClass(){
         ?>
         <div class="error">
-            <p><?php _e( 'Classe Odin_Metabox não encontrada! A Restrição de posts por usuário não funcionará corretamente!', 'odin' ); ?></p>
+            <p><?php _e( 'Classe Odin_Metabox não encontrada! A Restrição de posts por usuário não funcionará corretamente! https://github.com/wpbrasil/odin/wiki/Classe-Odin_Metabox', 'odin' ); ?></p>
         </div>
         <?php
     }
@@ -91,6 +91,12 @@ class ControllerUserPostRestriction{
         }
 
         if( !( array_intersect( $cap, $edit_posts_caps_restricteds ) ) ){
+            return $capabilities;
+        }
+
+        if( !did_action( 'all_admin_notices' ) ){
+            //Evitar que restrição por post afete o menu admin ja que o post_id do primeiro item da listagem fica inicializado
+            // assim o link para acesso a listagem poderia ser removido indevidamente
             return $capabilities;
         }
 

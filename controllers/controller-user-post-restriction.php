@@ -17,6 +17,7 @@ class ControllerUserPostRestriction{
         add_filter( 'post_row_actions' , array( $this, 'setUserRowActionViewRestriction' ), 10, 2 );
         add_filter( 'user_has_cap' , array( $this , 'setRoleHasCap' ) , 10 , 3 );
         add_action( 'init', array( $this, 'createMetaboxPostRestriction') );
+        add_action( 'wp', array( $this, 'checkUserAccessSinglePost') );
     }
 
     public function noticeMissingOdinClass(){
@@ -193,6 +194,29 @@ class ControllerUserPostRestriction{
         $restrictEligibleUsers->set_fields(
             $usersEligibleUsersArray
         );
+    }
+
+    public function checkUserAccessSinglePost(){
+        $post_id = get_the_ID();
+        $post_type = get_post_type();
+
+        if( !in_array( $post_type, $this->restrictedPostTypes ) ){
+            return;
+        }
+
+        if( !apply_filters( 'checkUserHasRole' , $this->restrictedUserRoles ) ){
+            return;
+        }
+
+        if( !is_single() ){
+            return;
+        }
+
+        if( apply_filters( 'checkUserCanViewRestrictPost' , $post_id  ) ){
+            return;
+        }
+
+        auth_redirect();
     }
 }
 

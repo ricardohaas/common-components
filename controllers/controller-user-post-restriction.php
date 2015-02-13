@@ -12,7 +12,9 @@ class ControllerUserPostRestriction{
         }
         add_filter( 'checkUserHasRole' , array( $this , 'checkUserHasRole' ) , 10 , 2 );
         add_filter( 'checkUserCanEditRestrictPost' , array( $this , 'checkUserCanEditRestrictPost' ) , 10 , 2 );
-        add_filter( 'post_row_actions' , array( $this, 'setUserRowActionRestriction' ), 10, 2 );
+        add_filter( 'checkUserCanViewRestrictPost' , array( $this , 'checkUserCanViewRestrictPost' ) , 10 , 2 );
+        add_filter( 'post_row_actions' , array( $this, 'setUserRowActionEditRestriction' ), 10, 2 );
+        add_filter( 'post_row_actions' , array( $this, 'setUserRowActionViewRestriction' ), 10, 2 );
         add_filter( 'user_has_cap' , array( $this , 'setRoleHasCap' ) , 10 , 3 );
         add_action( 'init', array( $this, 'createMetaboxPostRestriction') );
     }
@@ -57,7 +59,23 @@ class ControllerUserPostRestriction{
         return false;
     }
 
-    public function setUserRowActionRestriction( $actions, $user ){
+    public function checkUserCanViewRestrictPost( $post_id , $user_id = null ){
+        if ( is_numeric( $user_id ) )
+            $user = get_userdata( $user_id );
+        else
+            $user = wp_get_current_user();
+
+        if ( empty( $user ) )
+            return false;
+
+        if( get_post_meta( $post_id, 'user_can_view_post_' . $user->ID , true ) == true ){
+            return true;
+        }
+
+        return false;
+    }
+
+    public function setUserRowActionEditRestriction( $actions, $user ){
         $post_id = get_the_ID();
 
         if( !apply_filters( 'checkUserHasRole' , $this->restrictedUserRoles ) ){
@@ -69,11 +87,33 @@ class ControllerUserPostRestriction{
             return $actions;
         }
 
-        if( apply_filters( 'checkUserCanEditRestrictPost',  $post_id , $user ) )
+        if( apply_filters( 'checkUserCanEditRestrictPost',  $post_id , $user ) ){
             return $actions;
 
+        }
         unset( $actions[ 'edit' ] );
         unset( $actions[ 'inline hide-if-no-js' ] );
+        return $actions;
+    }
+
+    public function setUserRowActionEditRestriction( $actions, $user ){
+        $post_id = get_the_ID();
+
+        if( !apply_filters( 'checkUserHasRole' , $this->restrictedUserRoles ) ){
+            return $actions;
+        }
+
+        $post_type = get_post_type();
+        if( !in_array( $post_type, $this->restrictedPostTypes ) ){
+            return $actions;
+        }
+
+        if( apply_filters( 'checkUserCanViewRestrictPost',  $post_id , $user ) ){
+            return $actions;
+
+        }
+
+        unset( $actions[ 'view' ] );
         return $actions;
     }
 
@@ -129,6 +169,13 @@ class ControllerUserPostRestriction{
                 if( $current_user->ID == $user->ID ){
                     continue;
                 }
+
+                $usersEligibleUsersArray[] = array(
+                    'id'          => 'user_can_view_post_' . $user->ID,
+                    'label'       => $user->display_name,
+                    'type'        => 'checkbox',
+                    'is_column'   => false
+                );
 
                 $usersEligibleUsersArray[] = array(
                     'id'          => 'user_can_edit_post_' . $user->ID,

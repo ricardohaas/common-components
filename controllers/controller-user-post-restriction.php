@@ -96,7 +96,7 @@ class ControllerUserPostRestriction{
         return $actions;
     }
 
-    public function setUserRowActionEditRestriction( $actions, $user ){
+    public function setUserRowActionViewRestriction( $actions, $user ){
         $post_id = get_the_ID();
 
         if( !apply_filters( 'checkUserHasRole' , $this->restrictedUserRoles ) ){
@@ -110,10 +110,10 @@ class ControllerUserPostRestriction{
 
         if( apply_filters( 'checkUserCanViewRestrictPost',  $post_id , $user ) ){
             return $actions;
-
         }
 
         unset( $actions[ 'view' ] );
+
         return $actions;
     }
 
@@ -157,7 +157,7 @@ class ControllerUserPostRestriction{
         foreach( $this->restrictedPostTypes as $post_type ){
             $restrictEligibleUsers = new Odin_Metabox(
                 'eligible-user',
-                'Editores',
+                'Permissões',
                 $post_type,
                 'normal',
                 'high'
@@ -170,16 +170,20 @@ class ControllerUserPostRestriction{
                     continue;
                 }
 
+                if( !apply_filters( 'checkUserHasRole', $this->restrictedUserRoles, $user->ID ) ){
+                    continue;
+                }
+
                 $usersEligibleUsersArray[] = array(
                     'id'          => 'user_can_view_post_' . $user->ID,
-                    'label'       => $user->display_name,
+                    'label'       => 'Leitura: ' . $user->display_name,
                     'type'        => 'checkbox',
                     'is_column'   => false
                 );
 
                 $usersEligibleUsersArray[] = array(
                     'id'          => 'user_can_edit_post_' . $user->ID,
-                    'label'       => $user->display_name,
+                    'label'       => 'Edição: ' . $user->display_name,
                     'type'        => 'checkbox',
                     'is_column'   => false
                 );

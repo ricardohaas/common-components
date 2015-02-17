@@ -27,3 +27,6 @@ RewriteRule .* - [F,L]
     ExpiresDefault "access plus 15 days"
 </IfModule>
 ## END EXPIRES CACHING ##
+
+#.htaccess Snippets
+#https://github.com/phanan/htaccess
